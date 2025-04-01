@@ -4,51 +4,16 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router'
 
-export default function HomeScreen() {
-	SplashScreen.preventAutoHideAsync();
-	const router = useRouter();
+export default function LoginPage() {
 
-	const [fontsLoaded] = useFonts({
-		'Jersey15': require('../../assets/fonts/Jersey15.ttf'),
-	});
-
-	const floatAnim = useRef(new Animated.Value(0)).current;
-
-	useEffect(() => {
-		Animated.loop(
-			Animated.sequence([
-			Animated.timing(floatAnim, {
-				toValue: -15,
-				duration: 2000,
-				easing: Easing.inOut(Easing.ease),
-				useNativeDriver: true,
-			}),
-			Animated.timing(floatAnim, {
-				toValue: 0,
-				duration: 2000,
-				easing: Easing.inOut(Easing.ease),
-				useNativeDriver: true,
-			}),
-			])
-		).start();
-	}, []);
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   return (
 	<SafeAreaView style={styles.container}>
 		<ImageBackground
-			source={require('../../assets/images/lofi-breath.webp')}
+			source={require('../assets/images/lofi-breath.webp')}
 			style={styles.background}
+
 		>
-			<Animated.View style={[styles.welcomeMsg, { transform: [{ translateY: floatAnim }] }]}>
-				<Text style={styles.welcomeMsgText}>Welcome to your diary app</Text>
-			</Animated.View>
-				<TouchableOpacity style={styles.buttonContainer} onPress={() => router.push('../test')}>
-					<Text style={styles.loginPageButton}>Log in</Text>
-				</TouchableOpacity>
 		</ImageBackground>
 	</SafeAreaView>
   );
@@ -84,6 +49,7 @@ const styles = StyleSheet.create({
 	fontSize: 40,
 	fontWeight: '100',
 	textAlign: 'center',
+	//color: 'rgba(17, 0, 255, 0.6)',
 	color: 'black',
 	fontFamily: 'Jersey15',
   },
