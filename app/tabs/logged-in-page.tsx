@@ -6,12 +6,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as React from 'react';
 import { useRouter } from 'expo-router';
 import AuthSession, { resolveDiscoveryAsync } from 'expo-auth-session';
+import { useAuth } from '../AuthContext';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoggedInPage() {
+		const {
+			isLoggedIn,
+			setIsLoggedIn,
+			userInfo,
+			setUserInfo,
+		} = useAuth();
 	const router = useRouter();
-	const [userInfo, setUserInfo] = React.useState(null);
 	const redirectUri =
 		Platform.OS === 'ios'
 		? 'com.googleusercontent.apps.230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2:/oauthredirect'
@@ -26,6 +33,7 @@ export default function LoggedInPage() {
 			await AsyncStorage.removeItem('@user');
 			setUserInfo(null);
 			router.push('/');
+			setIsLoggedIn(false);
 			console.log('User logged out');
 		} catch (error) {
 			console.error('Error logging out:', error);
@@ -33,9 +41,9 @@ export default function LoggedInPage() {
 	}
 	
 	const getUserInfo = async (token : any) => {
-		if (!token)return;
+		if (!token) return;
 		try {
-			const response = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+			const response = await fetch('https://www.googleapis.com/userinfo/v2/me',{
 				headers: {
 					Authorization: `Bearer ${token}`,
 				},
@@ -45,7 +53,7 @@ export default function LoggedInPage() {
 			setUserInfo(user);
 			console.log(token)
 		} catch (error){
-			//error
+
 		}
 	}
 

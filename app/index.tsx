@@ -4,27 +4,38 @@ import { useEffect, useRef, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
+import { useAuth } from './AuthContext';
 
 export default function HomeScreen() {
-const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const {
+		isLoggedIn,
+		setIsLoggedIn,
+		userInfo,
+		setUserInfo,
+	} = useAuth();
+
   const router = useRouter();
   SplashScreen.preventAutoHideAsync();
 
-  useEffect(() => {
-	const checkLoginStatus = async () => {
-		const user = await AsyncStorage.getItem("@user");
-		setIsLoggedIn(!!user);
-		if (user) {
-		    router.replace('./tabs/home-page');
-		}
-		}
-	});
+
+	// const checkLoginStatus = async () => {
+	// 	const user = await AsyncStorage.getItem("@user");
+	// 	setIsLoggedIn(!user);
+	// 	if (user) {
+	// 		console.log('User is logged in');
+	// 	    router.replace('./tabs/logged-in-page');
+	// 	}
+	// 	console.log("user is not logged in")
+	// 	}
+	// ;
 
 	const handlePress = () => {
 		if (isLoggedIn) {
-		  router.replace('./tabs/home-page');
+			setIsLoggedIn(true);
+			router.replace('./tabs/logged-in-page');
 		} else {
-		  router.push('./tabs/login-page');
+			setIsLoggedIn(false);
+			router.push('./tabs/login-page');
 		}
 	     };
   const [fontsLoaded] = useFonts({
@@ -68,8 +79,10 @@ const [isLoggedIn, setIsLoggedIn] = useState(false);
         </Animated.View>
           <TouchableOpacity 
             style={styles.buttonContainer} 
-	     onPress={handlePress}
-          >
+	     onPress={() => {
+		handlePress()
+	}
+	     }>
             <Text style={styles.loginPageButton}>Log in</Text>
           </TouchableOpacity>
       </ImageBackground>

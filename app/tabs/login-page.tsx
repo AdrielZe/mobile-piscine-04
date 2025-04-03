@@ -5,13 +5,20 @@ import * as Google from 'expo-auth-session/providers/google';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as React from 'react';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../AuthContext';
 import AuthSession from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginPage() {
+	const {
+		isLoggedIn,
+		setIsLoggedIn,
+		userInfo,
+		setUserInfo,
+	} = useAuth();
+
 	const router = useRouter();
-	const [userInfo, setUserInfo] = React.useState(null);
 	const redirectUri =
 		Platform.OS === 'ios'
 		? 'com.googleusercontent.apps.230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2:/oauthredirect'
@@ -61,6 +68,7 @@ export default function LoginPage() {
 		const user = await AsyncStorage.getItem("@user");
 		if (!user) {
 			if(response?.type === 'success') {
+				setIsLoggedIn(true);
 				router.push('./logged-in-page');
 				await getUserInfo(response.authentication?.accessToken)
 			}
@@ -85,14 +93,13 @@ export default function LoginPage() {
               name="logo-google"
               size={40}
               color="#000000"
-
 		onPress={() => request ? promptAsync() : console.log("Request não está pronto")}
             />
             <Ionicons style={styles.iconLoginPage} name="logo-github" size={40} color="#000000" />
+          </View>
 	   <Text style={styles.welcomeMsgText} 	     onPress={() => router.push({
 		pathname: '/',
 	     })}> Back to login page </Text>
-          </View>
         </View>
       </ImageBackground>
     </SafeAreaView>
@@ -135,6 +142,7 @@ const styles = StyleSheet.create({
   loginPageIcons: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
+    padding: 20,
     width: '100%',
   },
   iconLoginPage: {
