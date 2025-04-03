@@ -9,13 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.appzao"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.anonymous.appzao"
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +34,26 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+	],
+	[
+	 "@react-native-google-signin/google-signin",
+	 {
+	  "iosUrlScheme": "com.googleusercontent.apps.230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2"
+	  
+	 }
       ]
+
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "5b461ee7-58bb-4b66-848d-adfc1b11579f"
+      }
     }
   }
 }
