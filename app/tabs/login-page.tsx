@@ -1,12 +1,22 @@
-import { ImageBackground, StyleSheet, SafeAreaView, Text, View, Platform } from 'react-native';
+import { ImageBackground, StyleSheet, SafeAreaView, Text, View, Platform, Alert} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useEffect } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../firebaseConfig";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as React from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../AuthContext';
-import AuthSession from 'expo-auth-session';
+import * as AuthSession from "expo-auth-session";
+import * as SecureStore from "expo-secure-store";
+
+
+const GITHUB_CLIENT_ID = "Ov23liNwqUaxFuJFtS7D";
+const GITHUB_CLIENT_SECRET = "3ecd0827f3ea7f5182c534b05dceaf1d08037752";
+const REDIRECT_URI = AuthSession.makeRedirectUri();
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -28,11 +38,62 @@ export default function LoginPage() {
 		iosClientId: '230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2.apps.googleusercontent.com',
 		redirectUri,
 	}) 
+	const [githubRequest, githubResponse, githubPromptAsync] = AuthSession.useAuthRequest({
+		clientId: "Ov23liNwqUaxFuJFtS7D",
+		scopes: ["read:user"],
+		redirectUri: REDIRECT_URI,
+	},
+	{ authorizationEndpoint: "https://github.com/login/oauth/authorize"}
+	);
+
+// async function saveUserToFirestore(user: any) {
+//   await setDoc(doc(db, "users", user.uid), {
+//     name: user.displayName,
+//     email: user.email,
+//     photoURL: user.photoURL,
+//   });
+// }
+
 	React.useEffect(() => {
 		console.log("Response:", response);
 		handleSignInWithGoogle();
 	   }, [response]);
 	   
+	 
+	   const fetchToken = async (code: string) => {
+		try {
+		  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+		    method: "POST",
+		    headers: {
+		      Accept: "application/json",
+		      "Content-Type": "application/json",
+		    },
+		    body: JSON.stringify({
+		      client_id: GITHUB_CLIENT_ID,
+		      client_secret: GITHUB_CLIENT_SECRET,
+		      code,
+		    }),
+		  });
+	     
+		  const { access_token } = await tokenResponse.json();
+	     
+		  const userResponse = await fetch("https://api.github.com/user", {
+		    headers: { Authorization: `Bearer ${access_token}` },
+		  });
+	     
+		  const userData = await userResponse.json();
+		  await SecureStore.setItemAsync("github_token", access_token);
+		  await AsyncStorage.setItem("@user", JSON.stringify(userData));
+		//  saveUserEntry(userData.id, userData)
+	     
+		  setUserInfo(userData);
+		  setIsLoggedIn(true);
+		  router.replace("./logged-in-page");
+		} catch (error) {
+		  Alert.alert("Erro", "Falha ao obter token do GitHub");
+		}
+	     };
+	
 	const handleLogout = async () => {
 		try {
 			await AsyncStorage.removeItem('@user');
@@ -43,6 +104,7 @@ export default function LoginPage() {
 			console.error('Error logging out:', error);
 		}
 	}
+
 	const getUserInfo = async (token : any) => {
 		if (!token)return;
 		try {
@@ -54,15 +116,30 @@ export default function LoginPage() {
 			const user = await response.json();
 			await AsyncStorage.setItem("@user", JSON.stringify(user));
 			setUserInfo(user);
-			console.log(token)
 		} catch (error){
-			//error
+			console.log("erro");
 		}
 	}
 	console.log("Redirect URI:", request?.redirectUri);
 	const isAuthenticated =  () => {
 		return userInfo != null;
 	}
+
+	const handleGitHubLogin = async () => {
+		try {
+		  const githubResponse = await githubPromptAsync();
+		  const user = await AsyncStorage.getItem("@user");
+		  if (githubResponse.type === "success" && githubResponse.params.code) {
+			setIsLoggedIn(true);
+			router.push('./logged-in-page');
+			const code = githubResponse.params.code;
+			// saveUserToFirestore(user);
+			await fetchToken(code);
+		  }
+		} catch (error) {
+		  Alert.alert("Erro", "Falha ao fazer login com GitHub");
+		}
+	     };
 	
 	async function handleSignInWithGoogle() {
 		const user = await AsyncStorage.getItem("@user");
@@ -70,6 +147,7 @@ export default function LoginPage() {
 			if(response?.type === 'success') {
 				setIsLoggedIn(true);
 				router.push('./logged-in-page');
+				// saveUserToFirestore(user)
 				await getUserInfo(response.authentication?.accessToken)
 			}
 		} else {
@@ -77,7 +155,7 @@ export default function LoginPage() {
 			setUserInfo(JSON.parse(user));
 		}
 	}
-	
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,9 +173,9 @@ export default function LoginPage() {
               color="#000000"
 		onPress={() => request ? promptAsync() : console.log("Request não está pronto")}
             />
-            <Ionicons style={styles.iconLoginPage} name="logo-github" size={40} color="#000000" />
+            <Ionicons style={styles.iconLoginPage} name="logo-github" size={40} color="#000000" onPress={handleGitHubLogin} />
           </View>
-	   <Text style={styles.welcomeMsgText} 	     onPress={() => router.push({
+	   <Text style={styles.welcomeMsgText} 	     onPress={() => router.replace({
 		pathname: '/',
 	     })}> Back to login page </Text>
         </View>

@@ -2,10 +2,13 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserInfo {
-  id?: string;
-  name?: string;
-  email?: string;
-  // Add any other user properties you need
+	email?: string;
+	family_name?: string;
+	given_name?: string;
+	id?: string;
+	name?: string;
+	picture?: string;
+	verified_email?: boolean;
 }
 
 interface AuthContextType {

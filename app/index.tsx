@@ -1,10 +1,12 @@
 import { ImageBackground, StyleSheet, SafeAreaView, Text, Animated, Easing, View, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useAuth } from './AuthContext';
+import { collection, doc, setDoc, getDoc, addDoc } from "firebase/firestore";
+import { db } from './firebaseConfig'
+
 
 export default function HomeScreen() {
 	const {
@@ -18,16 +20,24 @@ export default function HomeScreen() {
   SplashScreen.preventAutoHideAsync();
 
 
-	// const checkLoginStatus = async () => {
-	// 	const user = await AsyncStorage.getItem("@user");
-	// 	setIsLoggedIn(!user);
-	// 	if (user) {
-	// 		console.log('User is logged in');
-	// 	    router.replace('./tabs/logged-in-page');
-	// 	}
-	// 	console.log("user is not logged in")
-	// 	}
-	// ;
+  async function testFirestore() {
+	try {
+	  const testRef = doc(collection(db, "testCollection"));
+	  await setDoc(testRef, { message: "Conexão com Firestore funcionando!" });
+	  await addDoc(collection(db, "entries"), {
+		content: "foi pora",
+		timestamp: new Date(),
+	     });
+	  const docSnap = await getDoc(testRef);
+	  if (docSnap.exists()) {
+	    console.log("Documento salvo com sucesso:", docSnap.data());
+	  } else {
+	    console.log("Erro: Documento não encontrado!");
+	  }
+	} catch (error) {
+	  console.error("Erro ao testar Firestore:", error);
+	}
+     }
 
 	const handlePress = () => {
 		if (isLoggedIn) {

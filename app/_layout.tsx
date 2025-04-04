@@ -31,8 +31,8 @@ export default function RootLayout() {
 	<AuthProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-	 <Stack.Screen name="tabs/login-page" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false, gestureEnabled: false }} />
+	 <Stack.Screen name="tabs/login-page" options={{ headerShown: false, gestureEnabled: false }} />
 	 <Stack.Screen name="tabs/logged-in-page" options={{ headerShown: false, gestureEnabled: false}} />
         <Stack.Screen name="+not-found" />
       </Stack>
