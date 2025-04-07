@@ -52,7 +52,7 @@ export default function LoggedInPage() {
 	const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [loading, setLoading] = useState(true);
-	const [newCard, setNewCard] = useState<Omit<Card, 'id' | 'userEmail' | 'createdAt'>>({
+	const [newCard, setNewCard] = useState<Omit<Card, 'id' | 'userEmail' | 'createdAt' | 'blog'>>({
 		title: '',
 		message: '',
 		mood: 'smile-o',
@@ -97,8 +97,10 @@ export default function LoggedInPage() {
 	}, [userInfo?.email]);
 
 	const handleAddCard = async () => {
-		if (!userInfo?.email) return;
-		
+		if (!userInfo?.email && !userInfo?.blog) 
+			return;
+		if (userInfo.blog)
+			userInfo.email = userInfo.blog
 		try {
 		  await addDoc(collection(db, 'cards'), {
 		    userEmail: userInfo.email,
@@ -108,7 +110,6 @@ export default function LoggedInPage() {
 		    date: newCard.date,
 		    createdAt: new Date().toISOString()
 		  } as Card); // Cast para o tipo Card
-		  
 		  setShowAddModal(false);
 		  setNewCard({
 		    title: '',
@@ -143,7 +144,6 @@ export default function LoggedInPage() {
 			setUserInfo(null);
 			router.push('/');
 			setIsLoggedIn(false);
-			console.log('User logged out');
 		} catch (error) {
 			console.error('Error logging out:', error);
 		}
@@ -167,11 +167,15 @@ export default function LoggedInPage() {
 			style={styles.background}
 		>
 			<View style={styles.profileHeader}>
-				<Image
-					source={
-						userInfo?.picture ? { uri: userInfo?.picture } : require('../../assets/images/default-avatar.png') 
-					}
-					style={styles.profileImage}
+			<Image
+				source={
+				userInfo?.avatar_url 
+				? { uri: userInfo.avatar_url } 
+				: userInfo?.picture 
+					? { uri: userInfo.picture } 
+					: require('../../assets/images/default-avatar.png')
+				}
+				style={styles.profileImage}
 				/>
 				<Text style={styles.profileHeaderText}>{userInfo?.name}</Text>
 				<Text style={styles.profileHeaderText} onPress={handleLogout}>

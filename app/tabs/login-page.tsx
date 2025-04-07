@@ -41,7 +41,7 @@ export default function LoginPage() {
 	const [githubRequest, githubResponse, githubPromptAsync] = AuthSession.useAuthRequest({
 		clientId: "Ov23liNwqUaxFuJFtS7D",
 		scopes: ["read:user"],
-		redirectUri: '230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2:/oauthredirect',
+		redirectUri: 'exp://10.11.6.3:8081',
 	},
 	{ authorizationEndpoint: "https://github.com/login/oauth/authorize"}
 	);
@@ -76,8 +76,6 @@ export default function LoginPage() {
 		  const userData = await userResponse.json();
 		  await SecureStore.setItemAsync("github_token", access_token);
 		  await AsyncStorage.setItem("@user", JSON.stringify(userData));
-		//  saveUserEntry(userData.id, userData)
-	     
 		  setUserInfo(userData);
 		  setIsLoggedIn(true);
 		  router.replace("./logged-in-page");
@@ -97,6 +95,49 @@ export default function LoginPage() {
 		}
 	}
 
+	const fetchGitHubUser = async (code: string) => {
+		try {
+		  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+		    method: "POST",
+		    headers: {
+		      Accept: "application/json",
+		      "Content-Type": "application/json",
+		    },
+		    body: JSON.stringify({
+		      client_id: GITHUB_CLIENT_ID,
+		      client_secret: GITHUB_CLIENT_SECRET,
+		      code,
+		    }),
+		  });
+	     
+		  const { access_token } = await tokenResponse.json();
+	     
+		  if (!access_token) {
+		    throw new Error("Erro ao obter token do GitHub");
+		  }
+	     
+		  const userResponse = await fetch("https://api.github.com/user", {
+		    headers: { Authorization: `Bearer ${access_token}` },
+		  });
+	     
+		  const userData = await userResponse.json();
+	     
+		  // Armazena os dados do usuário e o token
+		  await SecureStore.setItemAsync("github_token", access_token);
+		  await AsyncStorage.setItem("@user", JSON.stringify(userData));
+	     
+		  setUserInfo(userData);
+		  console.log(userData)
+		  setIsLoggedIn(true);
+		  router.replace("./logged-in-page");
+	     
+		} catch (error) {
+		  Alert.alert("Erro", "Falha ao obter dados do GitHub");
+		  console.error("Erro ao buscar usuário GitHub:", error);
+		}
+	     };
+	     
+	     
 	const getUserInfo = async (token : any) => {
 		if (!token)return;
 		try {
@@ -106,6 +147,7 @@ export default function LoginPage() {
 				},
 			});
 			const user = await response.json();
+
 			await AsyncStorage.setItem("@user", JSON.stringify(user));
 			setUserInfo(user);
 		} catch (error){
@@ -117,16 +159,14 @@ export default function LoginPage() {
 		return userInfo != null;
 	}
 
+
 	const handleGitHubLogin = async () => {
 		try {
 		  const githubResponse = await githubPromptAsync();
-		  const user = await AsyncStorage.getItem("@user");
+	     
 		  if (githubResponse.type === "success" && githubResponse.params.code) {
-			setIsLoggedIn(true);
-			router.push('./logged-in-page');
 			const code = githubResponse.params.code;
-			// saveUserToFirestore(user);
-			await fetchToken(code);
+			await fetchGitHubUser(code);
 		  }
 		} catch (error) {
 		  Alert.alert("Erro", "Falha ao fazer login com GitHub");

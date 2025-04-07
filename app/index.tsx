@@ -20,24 +20,6 @@ export default function HomeScreen() {
   SplashScreen.preventAutoHideAsync();
 
 
-  async function testFirestore() {
-	try {
-	  const testRef = doc(collection(db, "testCollection"));
-	  await setDoc(testRef, { message: "Conexão com Firestore funcionando!" });
-	  await addDoc(collection(db, "entries"), {
-		content: "foi pora",
-		timestamp: new Date(),
-	     });
-	  const docSnap = await getDoc(testRef);
-	  if (docSnap.exists()) {
-	    console.log("Documento salvo com sucesso:", docSnap.data());
-	  } else {
-	    console.log("Erro: Documento não encontrado!");
-	  }
-	} catch (error) {
-	  console.error("Erro ao testar Firestore:", error);
-	}
-     }
 
 	const handlePress = () => {
 		if (isLoggedIn) {

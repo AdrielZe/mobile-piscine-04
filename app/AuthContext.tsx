@@ -9,6 +9,8 @@ interface UserInfo {
 	name?: string;
 	picture?: string;
 	verified_email?: boolean;
+	avatar_url?: string;
+	blog?: string;
 }
 
 interface AuthContextType {
