@@ -1,10 +1,9 @@
 import { ImageBackground, StyleSheet, SafeAreaView, Text, Animated, Easing, View, TouchableOpacity } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef} from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { useRouter } from 'expo-router';
 import { useAuth } from './AuthContext';
-import { collection, doc, setDoc, getDoc, addDoc } from "firebase/firestore";
 import { db } from './firebaseConfig'
 
 
@@ -12,15 +11,10 @@ export default function HomeScreen() {
 	const {
 		isLoggedIn,
 		setIsLoggedIn,
-		userInfo,
-		setUserInfo,
 	} = useAuth();
 
   const router = useRouter();
   SplashScreen.preventAutoHideAsync();
-
-
-
 	const handlePress = () => {
 		if (isLoggedIn) {
 			setIsLoggedIn(true);
@@ -81,8 +75,6 @@ export default function HomeScreen() {
     </SafeAreaView>
   );
 }
-
-// Mantenha seus estilos...
 
 const styles = StyleSheet.create({
   container: {

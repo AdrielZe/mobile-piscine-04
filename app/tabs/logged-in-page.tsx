@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { 
 	ImageBackground, 
 	StyleSheet, 
-	KeyboardAvoidingView,
-	Platform,
 	SafeAreaView, 
 	Text, 
 	View, 
@@ -12,13 +10,11 @@ import {
 	Modal, 
 	TextInput,
 	ScrollView,
-	ActivityIndicator
 } from 'react-native';
 import { 
 	collection, 
 	query, 
 	where, 
-	getDocs, 
 	addDoc, 
 	deleteDoc,
 	doc,
@@ -42,7 +38,6 @@ export default function LoggedInPage() {
 		createdAt?: string;
 	     }
 	const {
-		isLoggedIn,
 		setIsLoggedIn,
 		userInfo,
 		setUserInfo,
@@ -109,7 +104,7 @@ export default function LoggedInPage() {
 		    mood: newCard.mood,
 		    date: newCard.date,
 		    createdAt: new Date().toISOString()
-		  } as Card); // Cast para o tipo Card
+		  } as Card);
 		  setShowAddModal(false);
 		  setNewCard({
 		    title: '',
@@ -396,7 +391,8 @@ const styles = StyleSheet.create({
 	marginRight: 10,
 	borderWidth: 2,
 	borderColor: 'white',
-  },welcomeMsgOverlay: {
+  },
+  welcomeMsgOverlay: {
 	position: 'absolute',
 	top: 0,
 	left: 0,
@@ -404,7 +400,8 @@ const styles = StyleSheet.create({
 	bottom: 0,
 	backgroundColor: 'rgba(255, 255, 255, 0.3)',
 	borderRadius: 10,
-},mainSection:{
+},
+mainSection:{
 	padding: 10,
 	gap: 20,
 },
@@ -423,50 +420,52 @@ entryCard: {
 	shadowOpacity: 0.3,
 	shadowRadius: 4,
 	paddingHorizontal: 10,
-     },
-     entryCardDate:{
+},
+entryCardDate:{
 	flexDirection: 'column',
 	textAlign: 'center',
 	justifyContent: 'center',
 	alignItems: 'center',
-},entryCardDateText: {
+},
+entryCardDateText: {
 	fontFamily: 'Jersey15',
 	fontSize: 25,
 	color: 'rgb(0, 255, 34)',
 	textShadowColor: 'black',
 	textShadowOffset: { width: -1, height: 1 },
 	textShadowRadius: 1,
-     },
-     openedCardDateText: {
+},
+openedCardDateText: {
 	fontFamily: 'Jersey15',
 	fontSize: 25,
 	color: 'rgb(0, 255, 34)',
 	textShadowColor: 'black',
 	textShadowOffset: { width: -1, height: 1 },
 	textShadowRadius: 1,
-     },
-     iconLine:{
+},
+iconLine:{
 	width:2,
 	height: '60%',
 	backgroundColor: 'black',
-     },
-     titleContainer: {
+},
+titleContainer: {
 	flex: 0.5,
 	marginLeft: 10,
 	justifyContent: 'center',
-     },
-     cardTitleText: {
+},
+cardTitleText: {
 	fontFamily: 'Jersey15',
 	fontSize: 24,
 	color: 'rgb(0, 0, 0)',
 	overflow: 'hidden',
-     },
-     modalOverlay: {
+},
+modalOverlay: {
 	flex: 1,
 	backgroundColor: 'rgba(0, 0, 0, 0.6)',
 	justifyContent: 'center',
 	alignItems: 'center'
-},	openedCard: {
+},	
+openedCard: {
 	backgroundColor: 'rgba(202, 161, 255, 0.8)',
 	width: '80%',
 	borderWidth: 3,
@@ -478,90 +477,113 @@ entryCard: {
 	shadowOpacity: 0.3,
 	shadowRadius: 5,
 	elevation: 10
-},	modalTitle: { fontFamily: 'Jersey15', fontSize: 25, fontWeight: 'bold', marginBottom: 10},
-	modalMessage: { fontSize: 20, textAlign: 'center', marginBottom: 20, fontFamily: 'Jersey15', overflow: 'scroll', maxHeight: 400 },
-	closeButton: { backgroundColor: 'rgb(0, 212, 11)', padding: 10, borderRadius: 5, },
-addNewEntryButtonText: { color: 'white', fontSize: 20,  fontFamily: 'Jersey15',},
-	addNewEntryButton: {
-		justifyContent: 'center',
-		alignItems: 'center',
-		backgroundColor: 'rgb(0, 212, 11)', padding: 10, borderRadius: 5,
-		height: 60,
-		width: 150,
-		borderWidth: 3,
-	},  addCardModal: {
-		backgroundColor: 'rgba(255, 255, 255, 0.9)',
-		width: '90%',
-		padding: 20,
-		borderRadius: 10,
-		maxHeight: '40%',
-		overflow: 'scroll',
-	     },
-	     label: {
-		fontSize: 16,
-		fontWeight: 'bold',
-		marginTop: 10,
-		marginBottom: 5,
-		color: '#333',
-	     },
-	     dateText: {
-		fontSize: 16,
-		marginBottom: 15,
-		color: '#555',
-	     },
-	     input: {
-		borderWidth: 1,
-		borderColor: '#ccc',
-		borderRadius: 5,
-		padding: 10,
-		marginBottom: 15,
-		backgroundColor: '#fff',
-	     },
-	     multilineInput: {
-		height: 100,
-		textAlignVertical: 'top',
-	     },
-	     moodContainer: {
-		flexDirection: 'row',
-		flexWrap: 'wrap',
-		justifyContent: 'space-between',
-		marginBottom: 15,
-	     },
-	     moodOption: {
-		alignItems: 'center',
-		padding: 10,
-		borderRadius: 5,
-		margin: 5,
-		width: '30%',
-	     },
-	     selectedMood: {
-		backgroundColor: 'rgba(212, 189, 238, 0.5)',
-		borderWidth: 1,
-		borderColor: 'rgb(212, 189, 238)',
-	     },
-	     moodLabel: {
-		marginTop: 5,
-		fontSize: 12,
-	     },
-	     modalButtons: {
-		flexDirection: 'row',
-		justifyContent: 'space-between',
-		marginTop: 10,
-	     },
-	     modalButton: {
-		padding: 10,
-		borderRadius: 5,
-		width: '48%',
-		alignItems: 'center',
-	     },
-	     cancelButton: {
-		backgroundColor: '#ccc',
-	     },
-	     saveButton: {
-		backgroundColor: 'rgb(0, 212, 11)',
-	     },
-	     buttonText: {
-		color: '#fff',
-		fontWeight: 'bold',
-	     },
+},	
+modalTitle: { 
+	fontFamily: 'Jersey15', 
+	fontSize: 25, 
+	fontWeight: 'bold', 
+	marginBottom: 10
+},
+modalMessage: { 
+	fontSize: 20, 
+	textAlign: 'center', 
+	marginBottom: 20, 
+	fontFamily: 'Jersey15', 
+	overflow: 'scroll', 
+	maxHeight: 400 
+},
+	
+closeButton: {
+	backgroundColor: 'rgb(0, 212, 11)',
+	padding: 10,
+	borderRadius: 5,
+},
+addNewEntryButtonText: { 
+	color: 'white',
+	fontSize: 20,
+	fontFamily: 'Jersey15',
+},
+addNewEntryButton: {
+	justifyContent: 'center',
+	alignItems: 'center',
+	backgroundColor: 'rgb(0, 212, 11)', padding: 10, borderRadius: 5,
+	height: 60,
+	width: 150,
+	borderWidth: 3,
+},
+addCardModal: {
+	backgroundColor: 'rgba(255, 255, 255, 0.9)',
+	width: '90%',
+	padding: 20,
+	borderRadius: 10,
+	maxHeight: '40%',
+	overflow: 'scroll',
+},
+label: {
+	fontSize: 16,
+	fontWeight: 'bold',
+	marginTop: 10,
+	marginBottom: 5,
+	color: '#333',
+},
+dateText: {
+	fontSize: 16,
+	marginBottom: 15,
+	color: '#555',
+},
+input: {
+	borderWidth: 1,
+	borderColor: '#ccc',
+	borderRadius: 5,
+	padding: 10,
+	marginBottom: 15,
+	backgroundColor: '#fff',
+},
+multilineInput: {
+	height: 100,
+	textAlignVertical: 'top',
+},
+moodContainer: {
+	flexDirection: 'row',
+	flexWrap: 'wrap',
+	justifyContent: 'space-between',
+	marginBottom: 15,
+},
+moodOption: {
+	alignItems: 'center',
+	padding: 10,
+	borderRadius: 5,
+	margin: 5,
+	width: '30%',
+},
+selectedMood: {
+	backgroundColor: 'rgba(212, 189, 238, 0.5)',
+	borderWidth: 1,
+	borderColor: 'rgb(212, 189, 238)',
+},
+moodLabel: {
+	marginTop: 5,
+	fontSize: 12,
+},
+modalButtons: {
+	flexDirection: 'row',
+	justifyContent: 'space-between',
+	marginTop: 10,
+},
+modalButton: {
+	padding: 10,
+	borderRadius: 5,
+	width: '48%',
+	alignItems: 'center',
+},
+cancelButton: {
+	backgroundColor: '#ccc',
+},
+saveButton: {
+	backgroundColor: 'rgb(0, 212, 11)',
+},
+buttonText: {
+	color: '#fff',
+	fontWeight: 'bold',
+},
 });

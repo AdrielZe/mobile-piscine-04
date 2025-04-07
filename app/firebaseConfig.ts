@@ -1,10 +1,7 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth"; // 🔹 Importação do Auth
-import { getAnalytics } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBZBV-SP1BWg9mAo9N0GTZpSoCd2VZMYpA",
   authDomain: "diaryappdb-2048f.firebaseapp.com",
@@ -15,9 +12,8 @@ const firebaseConfig = {
   measurementId: "G-4FBV10536F",
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app); // 🔹 Inicializando Auth corretamente
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { auth, db }; // 🔹 Agora, auth está definido corretamente
+export { auth, db };
