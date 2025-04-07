@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
 	ImageBackground, 
 	StyleSheet, 
@@ -47,7 +47,7 @@ export default function LoggedInPage() {
 		userInfo,
 		setUserInfo,
 	} = useAuth();
-  
+	const scrollViewRef = useRef<ScrollView>(null);
 	const router = useRouter();
 	const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 	const [showAddModal, setShowAddModal] = useState(false);
@@ -149,6 +149,17 @@ export default function LoggedInPage() {
 		}
 	}
 
+	const handleMoodSelect = (moodName: string) => {
+		setNewCard({...newCard, mood: moodName as 'heart'});
+		
+		setTimeout(() => {
+		  scrollViewRef.current?.scrollTo({
+		    y: 300,
+		    animated: true
+		  });
+		}, 100);
+	     };
+
 	return (
 		<SafeAreaView style={styles.container}>
 		<ImageBackground
@@ -215,7 +226,9 @@ export default function LoggedInPage() {
 							<Text style={styles.openedCardDateText}>
 								{selectedCard.date.split(' ')[0]}, {selectedCard.date.split(' ')[1]} {selectedCard.date.split(' ')[2]}
 							</Text>
-							<Text style={styles.modalMessage}>{selectedCard.message}</Text>
+							<ScrollView >
+								<Text style={styles.modalMessage}>{selectedCard.message}</Text>
+							</ScrollView>
         							<View>
 							<TouchableOpacity 
 								onPress={() => {
@@ -243,7 +256,10 @@ export default function LoggedInPage() {
 		<Modal animationType="fade" transparent={true} visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
 			<View style={styles.modalOverlay}>
 			<View style={styles.addCardModal}>
-				<ScrollView>
+				<ScrollView
+					ref={scrollViewRef}
+					keyboardShouldPersistTaps="handled"
+        			>
 					<Text style={styles.modalTitle}>New Card</Text>
               			<Text style={styles.label}>Date:</Text>
 					<Text style={styles.dateText}>{newCard.date}</Text>	
@@ -252,7 +268,10 @@ export default function LoggedInPage() {
 						{moods.map((mood) => (
 							<TouchableOpacity 
 								key={mood.name}
-								onPress={() => setNewCard({...newCard, mood: mood.name as 'heart'})}
+								onPress={() => {
+									setNewCard({...newCard, mood: mood.name as 'heart'})
+									handleMoodSelect(mood.name)
+								}}
 								style={[
 									styles.moodOption,
                       						newCard.mood === mood.name && styles.selectedMood
@@ -456,7 +475,7 @@ entryCard: {
 	shadowRadius: 5,
 	elevation: 10
 },	modalTitle: { fontFamily: 'Jersey15', fontSize: 25, fontWeight: 'bold', marginBottom: 10},
-	modalMessage: { fontSize: 20, textAlign: 'center', marginBottom: 20, fontFamily: 'Jersey15' },
+	modalMessage: { fontSize: 20, textAlign: 'center', marginBottom: 20, fontFamily: 'Jersey15', overflow: 'scroll', maxHeight: 400 },
 	closeButton: { backgroundColor: 'rgb(0, 212, 11)', padding: 10, borderRadius: 5, },
 addNewEntryButtonText: { color: 'white', fontSize: 20,  fontFamily: 'Jersey15',},
 	addNewEntryButton: {

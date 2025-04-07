@@ -36,23 +36,15 @@ export default function LoginPage() {
 	const [request, response, promptAsync] = Google.useAuthRequest({
 		webClientId: '230648280850-8ias4poso58vsct6r1788c60958mos8l.apps.googleusercontent.com',
 		iosClientId: '230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2.apps.googleusercontent.com',
-		redirectUri,
+		redirectUri: 'com.googleusercontent.apps.230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2:/oauthredirect',
 	}) 
 	const [githubRequest, githubResponse, githubPromptAsync] = AuthSession.useAuthRequest({
 		clientId: "Ov23liNwqUaxFuJFtS7D",
 		scopes: ["read:user"],
-		redirectUri: REDIRECT_URI,
+		redirectUri: '230648280850-8dfin47lp9n9ofss1hojntihr1llmrd2:/oauthredirect',
 	},
 	{ authorizationEndpoint: "https://github.com/login/oauth/authorize"}
 	);
-
-// async function saveUserToFirestore(user: any) {
-//   await setDoc(doc(db, "users", user.uid), {
-//     name: user.displayName,
-//     email: user.email,
-//     photoURL: user.photoURL,
-//   });
-// }
 
 	React.useEffect(() => {
 		console.log("Response:", response);
