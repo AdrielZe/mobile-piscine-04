@@ -1,18 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  ImageBackground, 
-  StyleSheet, 
-  KeyboardAvoidingView,
-  Platform,
-  SafeAreaView, 
-  Text, 
-  View, 
-  Image, 
-  TouchableOpacity, 
-  Modal, 
-  TextInput,
-  ScrollView,
-  ActivityIndicator
+	ImageBackground, 
+	StyleSheet, 
+	KeyboardAvoidingView,
+	Platform,
+	SafeAreaView, 
+	Text, 
+	View, 
+	Image, 
+	TouchableOpacity, 
+	Modal, 
+	TextInput,
+	ScrollView,
+	ActivityIndicator
 } from 'react-native';
 import { 
 	collection, 
@@ -23,8 +23,8 @@ import {
 	deleteDoc,
 	doc,
 	onSnapshot 
-     } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Ajuste o caminho conforme sua configuração
+} from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
@@ -32,211 +32,266 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../AuthContext';
 
 export default function LoggedInPage() {
-  const {
-    isLoggedIn,
-    setIsLoggedIn,
-    userInfo,
-    setUserInfo,
-  } = useAuth();
+	interface Card {
+		id: string;
+		userEmail: string;
+		title: string;
+		message: string;
+		mood: 'smile-o' | 'meh-o' | 'frown-o' | 'flask' | 'heart';
+		date: string;
+		createdAt?: string;
+	     }
+	const {
+		isLoggedIn,
+		setIsLoggedIn,
+		userInfo,
+		setUserInfo,
+	} = useAuth();
   
-  const router = useRouter();
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newCard, setNewCard] = useState({
-    title: '',
-    message: '',
-    mood: 'smile-o',
-    date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-  });
-  
-  const [cards, setCards] = useState([
-    { id: 1, date: '28 May 2025', mood: 'smile-o', title: 'Test', message: 'Esta é a mensagem dentro do card.' },
-    { id: 2, date: '29 May 2025', mood: 'meh-o', title: 'Outro Teste', message: 'Outra mensagem de exemplo.' }
-  ]);
+	const router = useRouter();
+	const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [loading, setLoading] = useState(true);
+	const [newCard, setNewCard] = useState<Omit<Card, 'id' | 'userEmail' | 'createdAt'>>({
+		title: '',
+		message: '',
+		mood: 'smile-o',
+		date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+	     });
+	const [cards, setCards] = useState([]);
+	const moods = [
+		{ name: 'smile-o', label: 'Happy' },
+		{ name: 'meh-o', label: 'Neutral' },
+		{ name: 'frown-o', label: 'Sad' },
+		{ name: 'flask', label: 'Curious' },
+		{ name: 'heart', label: 'In Love' }
+	];
+	const fetchCards = async () => {
+		if (!userInfo?.email) return;
+		try {
+			setLoading(true);
+			const q = query(
+				collection(db, 'cards'),
+				where('userEmail', '==', userInfo.email)
+			);
+			const unsubscribe = onSnapshot(q, (querySnapshot) => {
+				const cardsData : any = [];
+				querySnapshot.forEach((doc) => {
+					cardsData.push({ id: doc.id, ...doc.data() });
+			});
+			setCards(cardsData);
+			setLoading(false);
+		});
+		return (unsubscribe);
+		} catch (error) {
+			console.error('Error fetching cards:', error);
+			setLoading(false);
+		}
+	};
 
-  const moods = [
-    { name: 'smile-o', label: 'Feliz' },
-    { name: 'meh-o', label: 'Neutro' },
-    { name: 'frown-o', label: 'Triste' },
-    { name: 'flask', label: 'Curioso' },
-    { name: 'heart', label: 'Apaixonado' }
-  ];
+	useEffect(() => {
+		const unsubscribe = fetchCards();
+		return () => {
+			if (unsubscribe) unsubscribe;
+		};
+	}, [userInfo?.email]);
 
-  const handleCardPress = (card) => {
-    setSelectedCard(card);
-  };
+	const handleAddCard = async () => {
+		if (!userInfo?.email) return;
+		
+		try {
+		  await addDoc(collection(db, 'cards'), {
+		    userEmail: userInfo.email,
+		    title: newCard.title,
+		    message: newCard.message,
+		    mood: newCard.mood,
+		    date: newCard.date,
+		    createdAt: new Date().toISOString()
+		  } as Card); // Cast para o tipo Card
+		  
+		  setShowAddModal(false);
+		  setNewCard({
+		    title: '',
+		    message: '',
+		    mood: 'smile-o',
+		    date: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
+		  });
+		} catch (error) {
+		  console.error('Error adding card:', error);
+		}
+	     };
 
-  const handleCloseModal = () => {
-    setSelectedCard(null);
-  };
+	const handleDeleteCard = async (cardId : any) => {
+		try {
+			await deleteDoc(doc(db, 'cards', cardId));
+		} catch (error) {
+			console.error('Error deleting card:', error);
+		}
+	};
 
-  const handleAddCard = () => {
-    const newId = cards.length > 0 ? Math.max(...cards.map(c => c.id)) + 1 : 1;
-    const cardToAdd = {
-      id: newId,
-      ...newCard
-    };
-    setCards([...cards, cardToAdd]);
-    setShowAddModal(false);
-    setNewCard({
-      title: '',
-      message: '',
-      mood: 'smile-o',
-      date: new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
-    });
-  };
+	const handleCardPress = (card: any) => {
+		setSelectedCard(card);
+	     };
 
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('@user');
-      setUserInfo(null);
-      router.push('/');
-      setIsLoggedIn(false);
-      console.log('User logged out');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  }
+	const handleCloseModal = () => {
+		setSelectedCard(null);
+	};
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={require('../../assets/images/lofi-breath.webp')}
-        style={styles.background}
-      >
-          <View style={styles.profileHeader}>
-            <Image
-              source={
-                userInfo?.picture ? { uri: userInfo?.picture } : require('../../assets/images/default-avatar.png') 
-              }
-              style={styles.profileImage}
-            />
-            <Text style={styles.profileHeaderText}>{userInfo?.name}</Text>
-            <Text style={styles.profileHeaderText} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={35} color="#000000" />
-            </Text>
-          </View>
-        <View style={styles.welcomeMsg}>
-          <View style={styles.welcomeMsgOverlay} />
+	const handleLogout = async () => {
+		try {
+			await AsyncStorage.removeItem('@user');
+			setUserInfo(null);
+			router.push('/');
+			setIsLoggedIn(false);
+			console.log('User logged out');
+		} catch (error) {
+			console.error('Error logging out:', error);
+		}
+	}
 
-          
-          <ScrollView style={styles.mainSection}>
-            {cards.map((card) => (
-              <TouchableOpacity key={card.id} onPress={() => handleCardPress(card)}>
-                <View style={styles.entryCard}>
-                  <View style={styles.entryCardDate}>
-                    <Text style={styles.entryCardDateText}>{card.date.split(' ')[0]}</Text>
-                    <Text style={styles.entryCardDateText}>{card.date.split(' ')[1]}</Text>
-                    <Text style={styles.entryCardDateText}>{card.date.split(' ')[2]}</Text>
-                  </View>
-                  <View style={styles.iconCard}>
-                    <FontAwesome name={card.mood} size={30} color="rgba(255, 255, 255, 1)" />
-                  </View>
-                  <View style={styles.iconLine} />
-                  <View style={styles.titleContainer}>
-                    <Text 
-                      style={styles.cardTitleText} 
-                      numberOfLines={1} 
-                      ellipsizeMode="tail"
-                    >
-                      {card.title}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-        
-        <TouchableOpacity 
-          onPress={() => setShowAddModal(true)} 
-          style={styles.addNewEntryButton}
-        >
-          <Text style={styles.addNewEntryButtonText}>Add new card</Text>
-        </TouchableOpacity>
-      </ImageBackground>
+	return (
+		<SafeAreaView style={styles.container}>
+		<ImageBackground
+			source={require('../../assets/images/lofi-breath.webp')}
+			style={styles.background}
+		>
+			<View style={styles.profileHeader}>
+				<Image
+					source={
+						userInfo?.picture ? { uri: userInfo?.picture } : require('../../assets/images/default-avatar.png') 
+					}
+					style={styles.profileImage}
+				/>
+				<Text style={styles.profileHeaderText}>{userInfo?.name}</Text>
+				<Text style={styles.profileHeaderText} onPress={handleLogout}>
+					<Ionicons name="log-out-outline" size={35} color="#000000" />
+				</Text>
+			</View>
+				<View style={styles.welcomeMsg}>
+					<View style={styles.welcomeMsgOverlay} />
+						<ScrollView style={styles.mainSection}>
+						{cards.map((card: Card) => (
+							<TouchableOpacity key={card.id} onPress={() => handleCardPress(card)}>
+							<View style={styles.entryCard}>
+							<View style={styles.entryCardDate}>
+								<Text style={styles.entryCardDateText}>{card.date.split(' ')[0]}</Text>
+								<Text style={styles.entryCardDateText}>{card.date.split(' ')[1]}</Text>
+								<Text style={styles.entryCardDateText}>{card.date.split(' ')[2]}</Text>
+							</View>
+							<View>
+								<FontAwesome name={card.mood} size={30} color="rgba(255, 255, 255, 1)" />
+							</View>
+							<View style={styles.iconLine} />
+							<View style={styles.titleContainer}>
+								<Text 
+								style={styles.cardTitleText} 
+								numberOfLines={1} 
+								ellipsizeMode="tail"
+								>
+								{card.title}
+								</Text>
+							</View>
+							</View>
+							</TouchableOpacity>
+						))}
+			</ScrollView>
+			</View>
+			<TouchableOpacity 
+				onPress={() => setShowAddModal(true)} 
+				style={styles.addNewEntryButton}
+			>
+				<Text style={styles.addNewEntryButtonText}>Add new card</Text>
+			</TouchableOpacity>
+		</ImageBackground>
 
-      {selectedCard && (
-        <Modal animationType="fade" transparent={true} visible={!!selectedCard} onRequestClose={handleCloseModal}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.openedCard}>
-              <Text style={styles.modalTitle}>{selectedCard.title}</Text>
-              <Text style={styles.modalTitle}>
-                <FontAwesome name={selectedCard.mood} size={30} color="rgba(255, 255, 255, 1)" />
-              </Text>
-              <Text style={styles.openedCardDateText}>
-                {selectedCard.date.split(' ')[0]}, {selectedCard.date.split(' ')[1]} {selectedCard.date.split(' ')[2]}
-              </Text>
-              <Text style={styles.modalMessage}>{selectedCard.message}</Text>
-              <TouchableOpacity onPress={handleCloseModal} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>Fechar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
+		{selectedCard && (
+			<Modal animationType="fade" transparent={true} visible={!!selectedCard} onRequestClose={handleCloseModal}>
+				<View style={styles.modalOverlay}>
+					<View style={styles.openedCard}>
+						<Text style={styles.modalTitle}>{selectedCard.title}</Text>
+							<Text style={styles.modalTitle}>
+								<FontAwesome name={selectedCard.mood} size={30} color="rgba(255, 255, 255, 1)" />
+							</Text>
+							<Text style={styles.openedCardDateText}>
+								{selectedCard.date.split(' ')[0]}, {selectedCard.date.split(' ')[1]} {selectedCard.date.split(' ')[2]}
+							</Text>
+							<Text style={styles.modalMessage}>{selectedCard.message}</Text>
+        							<View>
+							<TouchableOpacity 
+								onPress={() => {
+									handleDeleteCard(selectedCard.id);
+									handleCloseModal();
+								}} 
+								style={[styles.modalButton]}
+							>
+								<Ionicons name="trash-outline" size={20} color="white" />
+								<Text style={styles.buttonText}>Delete</Text>
+         						 </TouchableOpacity>
+							<TouchableOpacity 
+								onPress={handleCloseModal} 
+								style={[styles.modalButton, styles.closeButton]}
+							>
+								<Text style={styles.buttonText}>Close</Text>
+							</TouchableOpacity>
+      							</View>
+     						 </View>
+					</View>
+ 			</Modal>
+)}
  
-      {showAddModal && (
-        <Modal animationType="fade" transparent={true} visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
-          <View style={styles.modalOverlay}>
-            <View style={styles.addCardModal}>
-		<ScrollView>
-              <Text style={styles.modalTitle}>Novo Card</Text>
-              
-              <Text style={styles.label}>Data:</Text>
-              <Text style={styles.dateText}>{newCard.date}</Text>
-              
-              <Text style={styles.label}>Humor:</Text>
-              <View style={styles.moodContainer}>
-                {moods.map((mood) => (
-                  <TouchableOpacity 
-                    key={mood.name}
-                    onPress={() => setNewCard({...newCard, mood: mood.name})}
-                    style={[
-                      styles.moodOption,
-                      newCard.mood === mood.name && styles.selectedMood
-                    ]}
-                  >
-                    <FontAwesome name={mood.name} size={24} color="#000" />
-                    <Text style={styles.moodLabel}>{mood.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              
-              <Text style={styles.label}>Título:</Text>
-              <TextInput
-                style={styles.input}
-                value={newCard.title}
-                onChangeText={(text) => setNewCard({...newCard, title: text})}
-                placeholder="Digite o título"
-              />
-              
-		<TextInput
-		style={[styles.input, styles.multilineInput]}
-		value={newCard.message}
-		onChangeText={(text) => setNewCard({...newCard, message: text})}
-		placeholder="Digite sua mensagem"
-	
-		returnKeyType="done" // Mantém o comportamento padrão de nova linha
-
-		/>
-              
-              <View style={styles.modalButtons}>
-                <TouchableOpacity 
-                  onPress={() => setShowAddModal(false)} 
-                  style={[styles.modalButton, styles.cancelButton]}
-                >
-                  <Text style={styles.buttonText}>Cancelar</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  onPress={handleAddCard} 
-                  style={[styles.modalButton, styles.saveButton]}
-                  disabled={!newCard.title || !newCard.message}
-                >
-                  <Text style={styles.buttonText}>Salvar</Text>
-                </TouchableOpacity>
-              </View>
+	{showAddModal && (
+		<Modal animationType="fade" transparent={true} visible={showAddModal} onRequestClose={() => setShowAddModal(false)}>
+			<View style={styles.modalOverlay}>
+			<View style={styles.addCardModal}>
+				<ScrollView>
+					<Text style={styles.modalTitle}>New Card</Text>
+              			<Text style={styles.label}>Date:</Text>
+					<Text style={styles.dateText}>{newCard.date}</Text>	
+					<Text style={styles.label}>Mood:</Text>
+					<View style={styles.moodContainer}>
+						{moods.map((mood) => (
+							<TouchableOpacity 
+								key={mood.name}
+								onPress={() => setNewCard({...newCard, mood: mood.name as 'heart'})}
+								style={[
+									styles.moodOption,
+                      						newCard.mood === mood.name && styles.selectedMood
+                    						]}
+                 					>
+								<FontAwesome name={mood.name as 'heart'} size={24} color="#000" />
+								<Text style={styles.moodLabel}>{mood.label}</Text>
+                 					</TouchableOpacity>
+                				))}
+              	</View>
+              	<Text style={styles.label}>Title:</Text>
+             		<TextInput
+              		style={styles.input}
+              		value={newCard.title}
+              		onChangeText={(text) => setNewCard({...newCard, title: text})}
+              		placeholder="Type the title"
+              	/>
+			<TextInput
+				style={[styles.input, styles.multilineInput]}
+				value={newCard.message}
+				onChangeText={(text) => setNewCard({...newCard, message: text})}
+				placeholder="Type your message"
+				returnKeyType="done"
+			/>
+			<View style={styles.modalButtons}>
+				<TouchableOpacity 
+					onPress={() => setShowAddModal(false)} 
+					style={[styles.modalButton, styles.cancelButton]}
+				>
+					<Text style={styles.buttonText}>Cancel</Text>
+               		</TouchableOpacity>
+			<TouchableOpacity 
+				onPress={handleAddCard} 
+				style={[styles.modalButton, styles.saveButton]}
+				disabled={!newCard.title || !newCard.message}
+			>
+				<Text style={styles.buttonText}>Save</Text>
+			</TouchableOpacity>
+			</View>
 		</ScrollView>
             </View>
           </View>
@@ -324,7 +379,7 @@ const styles = StyleSheet.create({
 	left: 0,
 	right: 0,
 	bottom: 0,
-	backgroundColor: 'rgba(255, 255, 255, 0.3)', // Apenas o fundo opaco
+	backgroundColor: 'rgba(255, 255, 255, 0.3)',
 	borderRadius: 10,
 },mainSection:{
 	padding: 10,
@@ -354,10 +409,10 @@ entryCard: {
 },entryCardDateText: {
 	fontFamily: 'Jersey15',
 	fontSize: 25,
-	color: 'rgb(0, 255, 34)', // Cor principal do texto
-	textShadowColor: 'black', // Cor do contorno
-	textShadowOffset: { width: -1, height: 1 }, // Direção do contorno
-	textShadowRadius: 1, // Espessura do contorno
+	color: 'rgb(0, 255, 34)',
+	textShadowColor: 'black',
+	textShadowOffset: { width: -1, height: 1 },
+	textShadowRadius: 1,
      },
      openedCardDateText: {
 	fontFamily: 'Jersey15',
@@ -379,7 +434,7 @@ entryCard: {
      },
      cardTitleText: {
 	fontFamily: 'Jersey15',
-	fontSize: 24, // Reduzi um pouco o tamanho para caber melhor
+	fontSize: 24,
 	color: 'rgb(0, 0, 0)',
 	overflow: 'hidden',
      },
