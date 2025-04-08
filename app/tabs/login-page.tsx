@@ -147,7 +147,7 @@ export default function LoginPage() {
           </View>
 	   <Text style={styles.welcomeMsgText} 	     onPress={() => router.replace({
 		pathname: '/',
-	     })}> Back to login page </Text>
+	     })}> Back to home page </Text>
         </View>
       </ImageBackground>
     </SafeAreaView>
